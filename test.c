@@ -1,20 +1,21 @@
 #include <time.h>
 #include <sys/time.h>
 #include "test.h"
-#define num 0 // 0のとき平均クロックサイクル数を測定
+// #include "Modular_Inversion.h"
+#define num 1 // 0のとき平均クロックサイクル数を測定
 
 int main(){
     mpz_t result,x,y,p,pre_com,new_pre_com,pre_hdfctmi;
 	int loop,hloop;
     mpz_init(result);
-    mpz_init_set_str(x, "43", 10);
+    mpz_init_set_str(x, "60", 10);
 	mpz_init_set_str(y, "5", 10);
 	mpz_t x1;
 	mpz_init_set_str(x1, P_192_x1, 10);
 	// mpz_and(x1,x1,x);
 	// gmp_printf("x1=%Zd\n",x1);
 	int check;
-	check=512;
+	check=256;
 	if(check==192){
 		mpz_init_set_str(p, P_192, 10);
 		mpz_init_set_str(pre_com, P_192_pre_com, 10);
@@ -66,36 +67,51 @@ int main(){
 		// CC2 = GetCC();
 		// 	printf("SICTMI\n%ld\n", (CC2-CC1)/N);
 		// 	a1=(CC2-CC1)/N;
-		// CC1 = GetCC();
+		CC1 = GetCC();
+		for(int i = 0; i < N; ++i){
+			ex_SICT_MI(result,test_num[i], p, new_pre_com, loop-2);
+		}
+		CC2 = GetCC();
+			printf("ex_SICTMI\n%ld\n", (CC2-CC1)/N);
+
+		CC1 = GetCC();
+		for(int i = 0; i < N; ++i){
+			ECTMI2(result,test_num[i], p, pre_com, loop);
+		}
+		CC2 = GetCC();
+			printf("ECTMI2\n%ld\n", (CC2-CC1)/N);
+		
+
+		CC1 = GetCC();
 		// for(int i = 0; i < N; ++i){
-		// 	ex_SICT_MI(result,test_num[i], p, new_pre_com, loop-2);
+		// 	ECTMI3(&result,test_num[i], p, new_pre_com, loop-2);
 		// }
 		// CC2 = GetCC();
-		// 	printf("ex_SICTMI\n%ld\n", (CC2-CC1)/N);
+		// printf("ECTMI3\n%ld\n", (CC2-CC1)/N);
+		// a1=(CC2-CC1)/N;
 
-		CC1 = GetCC();
-		for(int i = 0; i < N; ++i){
-			ECTMI3(&result,test_num[i], p, new_pre_com, loop-2);
+		// CC1 = GetCC();
+		// for(int i = 0; i < N; ++i){
+		// 	ex_test3(&result,test_num[i], p, new_pre_com, loop-2);
+		// }
+		// CC2 = GetCC();
+		// printf("ex_test3\n%ld\n", (CC2-CC1)/N);
+		// a2=(CC2-CC1)/N;
+
+		CC1 = GetCC();		for(int i = 0; i < N; ++i){
+			KM1(result,test_num[i], p, new_pre_com, loop-2);
 		}
 		CC2 = GetCC();
-		printf("ECTMI3\n%ld\n", (CC2-CC1)/N);
-		a1=(CC2-CC1)/N;
-
-		CC1 = GetCC();
-		for(int i = 0; i < N; ++i){
-			ex_test3(&result,test_num[i], p, new_pre_com, loop-2);
-		}
-		CC2 = GetCC();
-		printf("ex_test3\n%ld\n", (CC2-CC1)/N);
-		a2=(CC2-CC1)/N;
+			printf("KM1\n%ld\n", (CC2-CC1)/N);
 		per = 100*(1-a2/a1);
-		printf("割合:%f\n",per);
+		// printf("割合:%f\n",per);
 	}else{//逆元確認用
 		// SICT_MI(result, x, p, pre_com, loop);
 		// ex_SICT_MI(result, x, p, new_pre_com, loop-2);
+		KM1(result, x, p, new_pre_com, loop-2);
 		// ex_test2(result,x, p, new_pre_com, loop-2, x1);
 		// ex_test3(&result, x, p, new_pre_com, loop-2);
-		ECTMI3(&result, x, p, new_pre_com, loop-2);
+		// ECTMI3(&result, x, p, new_pre_com, loop-2);
 		mpz_invert(result, x, p);
 		gmp_printf("逆元=%Zd\n",result);
 	}
