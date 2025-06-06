@@ -88,13 +88,13 @@ void FCTMI(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 
 		/*part 1 u = (u + (1-2sz)z v)/2*/
 		z *= temp1; // z = (1-2sz)z
-		mpz_set(temp2, v); temp2->_mp_size *= z;
-		//mpz_mul_si(temp2, v, z); // temp2 = (1-2sz)zv
+		// mpz_set(temp2, v); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, v, z); // temp2 = (1-2sz)zv
 		
 		/*v = v xor sz(v xor u)*/
 		mpz_xor(temp3, v, u); // temp3 = v xor u
-		temp3->_mp_size *= s;
-		//mpz_mul_ui(temp3, temp3, s); // temp3 = sz(v xor u)
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(v xor u)
 		mpz_xor(v, v, temp3); // v = v xor sz(v xor u)
 
 		/*part 2 u = (u + (1-2sz)z v)/2*/
@@ -102,13 +102,13 @@ void FCTMI(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 		mpz_tdiv_q_2exp(u, u, 1); // u = (u + (1-2sz)zv)/2
 
 		/*part 1 r = (1-2sz) z q + r*/
-		mpz_set(temp2, q); temp2->_mp_size *= z;
-		//mpz_mul_si(temp2, q, z); // temp2 = (1-2sz)z q
+		// mpz_set(temp2, q); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, q, z); // temp2 = (1-2sz)z q
 
 		/*q = 2(q xor sz(q xor r)) q = 2(sz r+(sz XOR 1)q)*/
 		mpz_xor(temp3, q, r); // temp3 = q xor r
-		temp3->_mp_size *= s;
-		//mpz_mul_ui(temp3, temp3, s); // temp3 = sz(q xor r)
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(q xor r)
 		mpz_xor(q, q, temp3); // q = q xor sz(q xor r)
 		mpz_mul_2exp(q, q, 1); // q = 2(q xor sz(q xor r)) 
 		/*
@@ -122,8 +122,9 @@ void FCTMI(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 		/*part 2 r = (1-2sz) z q + r*/
 		mpz_add(r, r, temp2);		
 	}
-	q->_mp_size *= mpz_sgn(v);
-	//mpz_mul_si(q, q, mpz_sgn(v)); 
+	// q->_mp_size *= mpz_sgn(v);
+	mpz_mul_si(q, q, mpz_sgn(v)); 
+	gmp_printf("逆元=%Zd\n", q);
 	mpz_mul(q, q, pre_comp); mpz_mod(q, q, p); 
 	mpz_clear(u); mpz_clear(v); mpz_clear(r); mpz_clear(temp2); mpz_clear(temp3);
 	return;

@@ -30,6 +30,21 @@
 #define P_384 "39402006196394479212279040100143613805079739270465446667948293404245721771496870329047266088258938001861606973112319"
 #define P_512 "134078079299425970995740249982058461274793658205923933777235614437217640300735469576801874298166903427690031858186486050853753882811946569946433649006084095"
 
+/*BY: The number of loops defined by (49d+57)//17 when d = 224, 256, or 384.*/
+
+#define P_192_LOOPS_BY 556
+#define P_224_LOOPS_BY 649 
+#define P_256_LOOPS_BY 741
+#define P_384_LOOPS_BY 1086//1110
+#define P_512_LOOPS_BY 1479
+
+/*Precomputed numbers of BY.*/
+// #define P_224_PRE_BY "2008672555230201739572940614232879648470511825043254648242560"//"26644009792206268056205042062915547495932996820470046226332801564673"
+#define P_224_PRE_BY "26644009792206268056205042062915547495932996820470046226332801564673"
+#define P_256_PRE_BY "115789218083876703796405708104922954266844366797366597945313458537426472636415"//"90462569673685862684289949614566734656231367827980882643939160353509669339137"
+#define P_384_PRE_BY "39401102631331629224042747884736582634501236456156400192182914717222615670170491983949444240325277863502310224573143"//"39124746653188674882124692525769249793887199085144063008056343542510001139863950072793525947872276405658285025530879"
+
+
 /*Precomputed numbers of hdFCTMI.*/
 #define P_224_PRE_hdFCIMI "3369993333197670545056871185872896170421996906849403135584645414912"
 #define P_256_PRE_hdFCIMI "49471717823667788566512707997982133781718357895554504641135267859606011904"
@@ -39,6 +54,101 @@
 #define P_224_LOOPS_hdFCTMI 517 
 #define P_256_LOOPS_hdFCTMI 590
 #define P_384_LOOPS_hdFCTMI 885
+
+/*FLT: The number of loops defined by bitlen(p) with p224, p256, p384.*/
+#define P_192_LOOPS_FLT 192
+#define P_224_LOOPS_FLT 224 
+#define P_256_LOOPS_FLT 256
+#define P_384_LOOPS_FLT 384
+#define P_512_LOOPS_FLT 512
+
+/*FLT: q = a^-1 mod p.*/
+void FLT(mpz_t q, mpz_t a, mpz_t p, int LOOPS){
+	char k[LOOPS];
+	mpz_t p_minus_two;
+	mpz_init(p_minus_two);
+	mpz_sub_ui(p_minus_two, p, 2);
+	mpz_get_str(k, 2, p_minus_two);
+
+	mpz_set(q, a);
+	
+	for(int i = 1; i < LOOPS; ++i){
+		mpz_mul(q, q, q);
+		mpz_mod(q, q, p);
+		if(k[i] == '1'){
+			mpz_mul(q, q, a);
+			mpz_mod(q, q, p);
+		}
+	}
+	// gmp_printf("逆元=%Zd\n", q);
+	return;
+}
+
+void BY(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+	mpz_t u, v;
+	mpz_init_set(u, a); mpz_init_set(v, p);
+
+	mpz_t r; 
+	mpz_set_ui(q, 0); mpz_init_set_ui(r, 1);
+
+	int delta = 1; 
+	int s, z; 
+	int temp1; mpz_t temp2, temp3; mpz_init(temp2); mpz_init(temp3);
+
+	for (int i = 0; i < LOOPS; ++i){
+		z = mpz_tstbit(u, 0); //z = LSB(u)
+		s = (delta >> 31) + 1; //s = signbit(-delta)
+
+		/*delta = 1 + (1 - 2sz) delta*/
+		s = s & z; // s = sz
+		temp1 = (s << 1); // temp1 = 2sz
+		temp1 = 1 - temp1; // temp1 = 1-2sz
+		delta *= temp1; // delta = (1-2sz) delta
+		delta += 1; // delta = delta + 1
+
+		/*part 1 u = (u + (1-2sz)z v)/2*/
+		z *= temp1; // z = (1-2sz)z
+		// mpz_set(temp2, v); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, v, z); // temp2 = (1-2sz)zv
+		
+		/*v = v xor sz(v xor u)*/
+		mpz_xor(temp3, v, u); // temp3 = v xor u
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(v xor u)
+		mpz_xor(v, v, temp3); // v = v xor sz(v xor u)
+
+		/*part 2 u = (u + (1-2sz)z v)/2*/
+		mpz_add(u, u, temp2); // u = u + (1-2sz)zv
+		mpz_tdiv_q_2exp(u, u, 1); // u = (u + (1-2sz)zv)/2
+
+		/*part 1 r = (1-2sz) z q + r*/
+		// mpz_set(temp2, q); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, q, z); // temp2 = (1-2sz)z q
+
+		/*q = 2(q xor sz(q xor r)) q = 2(sz r+(sz XOR 1)q)*/
+		mpz_xor(temp3, q, r); // temp3 = q xor r
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(q xor r)
+		mpz_xor(q, q, temp3); // q = q xor sz(q xor r)
+		mpz_mul_2exp(q, q, 1); // q = 2(q xor sz(q xor r)) 
+		/*
+		temp1 = s ^ 1; // temp1 = sz XOR 1
+		mpz_mul_si(q, q, temp1); // q = q (sz XOR 1)
+		mpz_mul_si(temp3, r, s); // temp3 = r sz
+		mpz_add(q, q, temp3); // q = q (sz XOR 1) + r sz
+		mpz_mul_2exp(q, q, 1); // q = 2(q (sz XOR 1) + r sz)
+		*/
+
+		/*part 2 r = (1-2sz) z q + r*/
+		mpz_add(r, r, temp2);		
+	}
+	// q->_mp_size *= mpz_sgn(v);
+	mpz_mul_si(q, q, mpz_sgn(v)); 
+	gmp_printf("逆元=%Zd\n", q);
+	mpz_mul(q, q, pre_comp); mpz_mod(q, q, p); 
+	mpz_clear(u); mpz_clear(v); mpz_clear(r); mpz_clear(temp2); mpz_clear(temp3);
+	return;
+}
 
 /*2^(l+1) - 1*/
 #define P_192_x1 "9850501549098619803069760025035903451269934817616361666987073351061430442874302652853566563721228910201656997576703"
@@ -485,7 +595,7 @@ void ex_test2(mpz_t v, mpz_t y, mpz_t m, mpz_t pre_com,int LOOPS, mpz_t x1){
 	// gmp_printf("(u,v)=(%Zd,%Zd)\n",u,v);
 	mpz_mul(v, v, pre_com);	mpz_mod(v, v, m);
 	// printf("ex_test2\n");
-	gmp_printf("逆元=%Zd\n", v);
+	// gmp_printf("逆元=%Zd\n", v);
 
 	mpz_clear(a); mpz_clear(b); mpz_clear(u); 
 	mpz_clear(tempa); mpz_clear(tempa1); mpz_clear(tempb); 
@@ -493,7 +603,7 @@ void ex_test2(mpz_t v, mpz_t y, mpz_t m, mpz_t pre_com,int LOOPS, mpz_t x1){
 	return ;
 }
 
-void ex_test3(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+void KM2(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 	mpz_t u, v, r, temp1, temp2, temp3, temp4, temp5;
 	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(*q, 0); mpz_init_set_ui(r, 1);
 	mpz_init(temp1); mpz_init(temp2); mpz_init(temp3); mpz_init(temp4); mpz_init(temp5);
@@ -712,7 +822,7 @@ void KM1(mpz_t y, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 
 	}
 	mpz_mul(y, y, pre_comp); mpz_mod(y, y, p); 
-	gmp_printf("逆元=%Zd\n", y);
+	// gmp_printf("逆元=%Zd\n", y);
 	mpz_clear(tempu); mpz_clear(tempv); mpz_clear(tempx); mpz_clear(tempy);
 	mpz_clear(u); mpz_clear(v); mpz_clear(x);
 	return;

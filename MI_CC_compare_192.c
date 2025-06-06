@@ -1,7 +1,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "Modular_Inversion.h"
-#include "test.h"
+// #include "test.h"
 
 int main(){
 	gmp_randstate_t state;
@@ -77,7 +77,7 @@ int main(){
 	//gettimeofday(&start, NULL);
 	CC1 = GetCC();
 	for(int i = 0; i < N; ++i){
-		ECTMI3(&result, test_num[i], p, pre_ectmi, P_384_LOOPS_ECTMI);
+		// ECTMI3(&result, test_num[i], p, pre_ectmi, P_384_LOOPS_ECTMI);
 	}
 	//gettimeofday(&end, NULL);
     	//sec = end.tv_sec-start.tv_sec;
@@ -88,7 +88,7 @@ int main(){
 	
 	CC1 = GetCC();
 	for(int i = 0; i < N; ++i){
-		SICTMI(&result, test_num[i], p, P_384_pre_com, P_384_LOOPS_SICTMI);
+		// SICTMI(&result, test_num[i], p, P_384_pre_com, P_384_LOOPS_SICTMI);
 	}
 	//gettimeofday(&end, NULL);
     	//sec = end.tv_sec-start.tv_sec;
@@ -99,7 +99,7 @@ int main(){
 	
 	CC1 = GetCC();
 	for(int i = 0; i < N; ++i){
-		ex_SICTMI(&result, test_num[i], p, pre_ectmi, P_384_LOOPS_ECTMI);
+		// ex_SICTMI(&result, test_num[i], p, pre_ectmi, P_384_LOOPS_ECTMI);
 	}
 	//gettimeofday(&end, NULL);
     	//sec = end.tv_sec-start.tv_sec;

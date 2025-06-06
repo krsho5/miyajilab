@@ -15,7 +15,7 @@ int main(){
 	mpz_init_set_str(p, P_384, 10); mpz_sub_ui(p, p, 1);
 	mpz_init(result);
 
-	int N = 100000;
+	int N = 1;
 	mpz_t test_num[N];
 	for(int i = 0; i < N; ++i){
 		mpz_init(test_num[i]);
@@ -26,12 +26,24 @@ int main(){
 	}
 	
 	//gettimeofday(&start, NULL);
-	// CC1 = GetCC();
-	// for(int i = 0; i < N; ++i){
-	// 	FCTMI(result, p, test_num[i], P_384_LOOPS_FCTMI);
-	// }
-	// //gettimeofday(&end, NULL);
-    // 	CC2 = GetCC();
+	mpz_t BYprecom;
+	// int BYprecom;
+	mpz_init_set_str(BYprecom, P_384_PRE_FCIMI, 10);
+	CC1 = GetCC();
+	for(int i = 0; i < N; ++i){
+		BY(result, p, test_num[i],BYprecom, P_384_LOOPS_FCTMI);
+	}
+	//gettimeofday(&end, NULL);
+    	CC2 = GetCC();
+
+	CC1 = GetCC();
+	for(int i = 0; i < N; ++i){
+		mpz_invert(result, test_num[i],p);
+	}
+	//gettimeofday(&end, NULL);
+    	CC2 = GetCC();
+
+	gmp_printf("逆元=%Zd\n", result);
     // 	printf("FGCD: %ld\n", CC2-CC1);
     // 	//sec = end.tv_sec-start.tv_sec;
     // 	//usec = end.tv_usec-start.tv_usec;
@@ -50,12 +62,12 @@ int main(){
 	//printf("hdFGCD: %ld\n", (sec*1000000+usec));
 
 	//gettimeofday(&start, NULL);
-	CC1 = GetCC();
-	for(int i = 0; i < N; ++i){
-		ECTMI(result, test_num[i], p, P_384_LOOPS_ECTMI);
-	}
-	CC2 = GetCC();
-    	printf("EGCD: %ld\n", CC2-CC1);
+	// CC1 = GetCC();
+	// for(int i = 0; i < N; ++i){
+	// 	ECTMI(result, test_num[i], p, P_384_LOOPS_ECTMI);
+	// }
+	// CC2 = GetCC();
+    	// printf("EGCD: %ld\n", CC2-CC1);
 	//gettimeofday(&end, NULL);
     	//sec = end.tv_sec-start.tv_sec;
     	//usec = end.tv_usec-start.tv_usec;
@@ -85,5 +97,9 @@ int main(){
     	//usec = end.tv_usec-start.tv_usec;
 	//printf("EGCD3: %ld\n", (sec*1000000+usec));
 
+
 	return 0;
+	mpz_clear(BYprecom);
+	mpz_clear(p);
+	mpz_clear(result);
 }

@@ -8,6 +8,11 @@
 #define P_256_LOOPS_FCTMI 724//741
 #define P_384_LOOPS_FCTMI 1086//1110
 
+/*Precomputed numbers of FCTMI.*/
+#define P_224_PRE_FCIMI "2008672555230201739572940614232879648470511825043254648242560"//"26644009792206268056205042062915547495932996820470046226332801564673"
+#define P_256_PRE_FCIMI "115789218083876703796405708104922954266844366797366597945313458537426472636415"//"90462569673685862684289949614566734656231367827980882643939160353509669339137"
+#define P_384_PRE_FCIMI "39401102631331629224042747884736582634501236456156400192182914717222615670170491983949444240325277863502310224573143"//"39124746653188674882124692525769249793887199085144063008056343542510001139863950072793525947872276405658285025530879"
+
 /*hdFCTMI: The number of loops when d = 224, 256, or 384.*/
 #define P_224_LOOPS_hdFCTMI 517 
 #define P_256_LOOPS_hdFCTMI 590
@@ -364,5 +369,71 @@ void SICT_MI(mpz_t v, mpz_t a, mpz_t p, mpz_t pre_com,int LOOPS){
 	// gmp_printf("逆元=%Zd\n", q);
 	mpz_clear(u); mpz_clear(temp1); mpz_clear(temp2); 
 	mpz_clear(q); mpz_clear(r); mpz_clear(temp3); mpz_clear(temp4); 
+	return;
+}
+
+void BY(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+	mpz_t u, v;
+	mpz_init_set(u, a); mpz_init_set(v, p);
+
+	mpz_t r; 
+	mpz_set_ui(q, 0); mpz_init_set_ui(r, 1);
+
+	int delta = 1; 
+	int s, z; 
+	int temp1; mpz_t temp2, temp3; mpz_init(temp2); mpz_init(temp3);
+
+	for (int i = 0; i < LOOPS; ++i){
+		z = mpz_tstbit(u, 0); //z = LSB(u)
+		s = (delta >> 31) + 1; //s = signbit(-delta)
+
+		/*delta = 1 + (1 - 2sz) delta*/
+		s = s & z; // s = sz
+		temp1 = (s << 1); // temp1 = 2sz
+		temp1 = 1 - temp1; // temp1 = 1-2sz
+		delta *= temp1; // delta = (1-2sz) delta
+		delta += 1; // delta = delta + 1
+
+		/*part 1 u = (u + (1-2sz)z v)/2*/
+		z *= temp1; // z = (1-2sz)z
+		// mpz_set(temp2, v); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, v, z); // temp2 = (1-2sz)zv
+		
+		/*v = v xor sz(v xor u)*/
+		mpz_xor(temp3, v, u); // temp3 = v xor u
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(v xor u)
+		mpz_xor(v, v, temp3); // v = v xor sz(v xor u)
+
+		/*part 2 u = (u + (1-2sz)z v)/2*/
+		mpz_add(u, u, temp2); // u = u + (1-2sz)zv
+		mpz_tdiv_q_2exp(u, u, 1); // u = (u + (1-2sz)zv)/2
+
+		/*part 1 r = (1-2sz) z q + r*/
+		// mpz_set(temp2, q); temp2->_mp_size *= z;
+		mpz_mul_si(temp2, q, z); // temp2 = (1-2sz)z q
+
+		/*q = 2(q xor sz(q xor r)) q = 2(sz r+(sz XOR 1)q)*/
+		mpz_xor(temp3, q, r); // temp3 = q xor r
+		// temp3->_mp_size *= s;
+		mpz_mul_ui(temp3, temp3, s); // temp3 = sz(q xor r)
+		mpz_xor(q, q, temp3); // q = q xor sz(q xor r)
+		mpz_mul_2exp(q, q, 1); // q = 2(q xor sz(q xor r)) 
+		/*
+		temp1 = s ^ 1; // temp1 = sz XOR 1
+		mpz_mul_si(q, q, temp1); // q = q (sz XOR 1)
+		mpz_mul_si(temp3, r, s); // temp3 = r sz
+		mpz_add(q, q, temp3); // q = q (sz XOR 1) + r sz
+		mpz_mul_2exp(q, q, 1); // q = 2(q (sz XOR 1) + r sz)
+		*/
+
+		/*part 2 r = (1-2sz) z q + r*/
+		mpz_add(r, r, temp2);		
+	}
+	// q->_mp_size *= mpz_sgn(v);
+	mpz_mul_si(q, q, mpz_sgn(v)); 
+	mpz_mul(q, q, pre_comp); mpz_mod(q, q, p); 
+	gmp_printf("逆元=%Zd\n", q);
+	mpz_clear(u); mpz_clear(v); mpz_clear(r); mpz_clear(temp2); mpz_clear(temp3);
 	return;
 }
