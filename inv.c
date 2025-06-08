@@ -16,23 +16,32 @@
 #define P_384_pre_com "39401997719623594004609818748773390158923402225834345130666249913583939917682844212927918355281735000658345862363656"
 #define P_512_pre_com "104174602983677100090188404798997345435175366322587289367637992126922563506503570441557461874283519919404476999295620665941816345906030878912480330037339671"
 
+#define X "3369993333393829974333376885877453834197097513530498766081423285882"
+
 int main(){
     mpz_t result,a,p,b;
     mpz_init(result);
     mpz_init_set_str(a, "2", 10);
     mpz_init_set_str(p, P_192, 10);
+    mpz_init_set_str(b, X, 10);
     unsigned long int l;
-    l=382;
-    // mpz_pow_ui(result, a, l);
-    // gmp_printf("2^l = %Zd\n",result); 
-    // mpz_invert(result, result, p);
-    // gmp_printf("2^(-l) = %Zd\n",result);
-    // mpz_init_set_str(b, "0", 10);
-    mpz_ior(result,p,b);
-    gmp_printf("p or b = %Zd\n", result);
-    
+    l=556;
+
+    mpz_pow_ui(result, a, l);
+    gmp_printf("2^l = %Zd\n",result); 
+    mpz_invert(result, result, p);
+    gmp_printf("2^(-l) = %Zd\n",result);
+    // mpz_mul(result, result, b);
+    mpz_mod(result, result, p);
+
     // mpz_invert(result, a, p);
-    // gmp_printf("逆元=%Zd\n", result);
+    gmp_printf("逆元=%Zd\n", result);
+
+    // mpz_init_set_str(b, "0", 10);
+    // mpz_ior(result,p,b);
+    // gmp_printf("p or b = %Zd\n", result);
+    
+
     mpz_clear(a); mpz_clear(p); mpz_clear(result);mpz_clear(b);
 
 

@@ -33,27 +33,36 @@
 /*BY: The number of loops defined by (49d+57)//17 when d = 224, 256, or 384.*/
 
 #define P_192_LOOPS_BY 556
-#define P_224_LOOPS_BY 649 
-#define P_256_LOOPS_BY 741
-#define P_384_LOOPS_BY 1086//1110
+#define P_224_LOOPS_BY 649 //634
+#define P_256_LOOPS_BY 741 //724
+#define P_384_LOOPS_BY 1110 //1086
 #define P_512_LOOPS_BY 1479
 
 /*Precomputed numbers of BY.*/
-// #define P_224_PRE_BY "2008672555230201739572940614232879648470511825043254648242560"//"26644009792206268056205042062915547495932996820470046226332801564673"
-#define P_224_PRE_BY "26644009792206268056205042062915547495932996820470046226332801564673"
-#define P_256_PRE_BY "115789218083876703796405708104922954266844366797366597945313458537426472636415"//"90462569673685862684289949614566734656231367827980882643939160353509669339137"
-#define P_384_PRE_BY "39401102631331629224042747884736582634501236456156400192182914717222615670170491983949444240325277863502310224573143"//"39124746653188674882124692525769249793887199085144063008056343542510001139863950072793525947872276405658285025530879"
+#define P_192_PRE_BY "356811923176489970283914305476207850887839744"
+#define P_224_PRE_BY "26644009792206268056205042062915547495932996820470046226332801564673" //"2008672555230201739572940614232879648470511825043254648242560"
+#define P_256_PRE_BY "90462569673685862684289949614566734656231367827980882643939160353509669339137" // "115789218083876703796405708104922954266844366797366597945313458537426472636415"
+#define P_384_PRE_BY "39124746653188674882124692525769249793887199085144063008056343542510001139863950072793525947872276405658285025530879" //"39124746653188674882124692525769249793887199085144063008056343542510001139863950072793525947872276405658285025530879"
+#define P_512_PRE_BY "13825642078951385925798118437925810892920093654092408207366237634142594550822799868958060320448528991769146681760552300788798774643326153653954302091952237"
 
+// /*Precomputed numbers of hdFCTMI.*/
+// #define P_224_PRE_hdFCIMI "3369993333197670545056871185872896170421996906849403135584645414912"
+// #define P_256_PRE_hdFCIMI "49471717823667788566512707997982133781718357895554504641135267859606011904"
+// #define P_384_PRE_hdFCIMI "36092402410143488406830006651847393538951028178043571563308995486226118841864038653366404110975726264988796028928"
 
-/*Precomputed numbers of hdFCTMI.*/
-#define P_224_PRE_hdFCIMI "3369993333197670545056871185872896170421996906849403135584645414912"
-#define P_256_PRE_hdFCIMI "49471717823667788566512707997982133781718357895554504641135267859606011904"
-#define P_384_PRE_hdFCIMI "36092402410143488406830006651847393538951028178043571563308995486226118841864038653366404110975726264988796028928"
+// /*hdFCTMI: The number of loops when d = 224, 256, or 384.*/
+// #define P_224_LOOPS_hdFCTMI 517 
+// #define P_256_LOOPS_hdFCTMI 590
+// #define P_384_LOOPS_hdFCTMI 885
 
-/*hdFCTMI: The number of loops when d = 224, 256, or 384.*/
-#define P_224_LOOPS_hdFCTMI 517 
-#define P_256_LOOPS_hdFCTMI 590
-#define P_384_LOOPS_hdFCTMI 885
+/*2^(l+1) - 1*/
+#define P_192_x1 "9850501549098619803069760025035903451269934817616361666987073351061430442874302652853566563721228910201656997576703"
+#define P_192_bos "12554203470773361527671578846415332832204710888928069025791"
+#define P_224_bos "53919893334301279589334030174039261347274288845081144962207220498431"
+#define P_256_bos "231584178474632390847141970017375815706539969331281128078915168015826259279871"
+#define P_384_bos "78804012392788958424558080200287227610159478540930893335896586808491443542994421222828532509769831281613255980613631"
+#define P_512_bos "26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168192"
+
 
 /*FLT: The number of loops defined by bitlen(p) with p224, p256, p384.*/
 #define P_192_LOOPS_FLT 192
@@ -84,6 +93,197 @@ void FLT(mpz_t q, mpz_t a, mpz_t p, int LOOPS){
 	return;
 }
 
+void bos(mpz_t y,mpz_t p, mpz_t k){
+	unsigned long l = mpz_get_ui(k);
+	mpz_t result,a;
+    mpz_init(result);
+	mpz_init(a);
+    mpz_set_str(a, "2", 10);
+    mpz_pow_ui(result, a, l);
+    // gmp_printf("2^l = %Zd\n",result); 
+    mpz_invert(result, result, p);
+    // gmp_printf("2^(-l) = %Zd\n",result);
+    mpz_mul(result, result, y);
+    mpz_mod(result, result, p);
+    // gmp_printf("P * 2^(-l) = %Zd\n", result);
+	// printf("BOS\n");
+	gmp_printf("逆元=%Zd\n", result);
+    mpz_clear(result); mpz_clear(a);
+	return;
+
+}
+
+void BOS(mpz_t y, mpz_t a, mpz_t p, int LOOPS, mpz_t X1){
+	mpz_t u,v,x,k,d;
+	mpz_t tmp;
+	mpz_init(tmp);
+	mpz_t zero,one;
+	mpz_t m1,m2,m3,m4,m5,m6,m7,S;
+	mpz_t v1,u1,x1,y1,xy;
+	mpz_init(m1); mpz_init(m2); mpz_init(m3); mpz_init(m4); mpz_init(m5); mpz_init(m6); mpz_init(m7);mpz_init(S);
+	// mpz_init(z1);
+	// mpz_init(z2);
+	mpz_init(v1);
+	mpz_init(u1);
+	mpz_init(x1);
+	mpz_init(y1);
+	mpz_init(xy);
+	mpz_init_set(u, a);
+	mpz_init_set(v, p);
+	mpz_init_set_str(x, "1", 10);
+	mpz_init_set_str(y, "0", 10);
+	mpz_init_set_str(k, "0",10);
+	mpz_init(d);
+	mpz_init_set_str(zero, "0",10);
+	// mpz_init_set_str(one, "1",10);
+
+	mpz_t eq_vu,sub_vu, sub_uv;
+	mpz_init(eq_vu); mpz_init(sub_vu);mpz_init(sub_uv);
+	int vu;
+	
+	bool u_lsb,v_lsb;
+	
+	// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+	for (int i = 0; i < LOOPS; ++i){
+		// printf("ーーーーーループ回数：%dーーーーーー\n",i);
+		// gmp_printf("k=%Zd\n",k);
+		// gmp_printf("(u,v)=(%Zd,%Zd)\n",u,v);
+		u_lsb = mpz_tstbit(u, 0); //uの最下位ビット
+		v_lsb = mpz_tstbit(v, 0); //vの最下位ビット
+		mpz_sub(sub_vu, v, u); //sub v-u
+		vu = mpz_cmp(v,u);// v>=uのときz=1 a<bのときz=0
+		int z1 = 0;
+		int z2 = 0;
+		if (vu > 0) {//v>u
+			// mpz_set(z1,0);
+			// mpz_set(z2,0);
+			mpz_set(d,zero);
+			z2=1;
+		} else if (vu == 0) {//v=u
+			// mpz_set(z1,0);
+			// mpz_set(z2,1);
+			mpz_set(d,X1);
+			// printf("k=%d\n",i);
+			z1=1;
+		} else{//v<u
+			// mpz_set(z1,1);
+			z1 = 1;
+			// mpz_set(z2,0);
+			mpz_set(d,zero);
+		}
+		// gmp_printf("d=%Zd\n",d);
+		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+		//branch1
+		mpz_add(xy, x ,y);//xy=x+y
+		mpz_mul_2exp(x1, x, 1); //x1=x<<1
+		mpz_tdiv_q_2exp(v1, v, 1); //v=v>>1
+		mpz_set_si(tmp,(0 - (v_lsb & 1)));
+		mpz_ior(m1, d, tmp);
+		mpz_com(m2, m1);
+		mpz_and(v1, v1, m2);//v1 = v1 and m2
+		mpz_and(u1, v, m1);//u1 = v and m1
+		mpz_ior(v, v1, u1);
+		// gmp_printf("m1=%Zd\n",m1);
+		// gmp_printf("m2=%Zd ",m2);
+		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+		mpz_and(u1, x1, m2);//u1 = x1 and m2
+		mpz_and(v1, u1, m1);//v1 = x and m1
+		mpz_ior(x, x1, v1);
+
+		//branch2
+		mpz_mul_2exp(y1, y, 1); //y1=y<<1
+		mpz_tdiv_q_2exp(u1, u, 1); //u1=u>>1
+		mpz_ior(S, d, m2); // S = d or m2 
+		mpz_set_si(tmp,(0 - (u_lsb & 1)));//mpz_t に変換
+		// gmp_printf("d=%Zd\n",d);
+		// gmp_printf("m2=%Zd\n",m2);
+		// gmp_printf("S=%Zd\n",S);
+		// gmp_printf("tmp=%Zd\n",tmp);
+		mpz_ior(m3, S, tmp);
+		mpz_com(m4, m3);
+		mpz_and(u1, u1, m4);//u1 = u1 and m4
+		mpz_and(v1, u, m3);//v1 = u and m3
+		mpz_ior(u, u1, v1);
+		// gmp_printf("m3=%Zd\n",m3);
+		// gmp_printf("m4=%Zd ",m4);
+		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+		mpz_and(v1, y1, m4);//v1 = y1 and m4
+		mpz_and(u1, y, m3);//u1 = y and m3
+		mpz_ior(y, v1, u1);
+
+		//branch3
+		// mpz_mul_2exp(y1, y, 1); //y1=y<<1
+		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+		mpz_ior(S, S, m4); // S = S or m4 
+		mpz_set_si(tmp,(0 - z1));//mpz_t に変換
+		mpz_ior(m5, S, tmp);
+		mpz_com(m6, m5);
+		// if(i>186){
+
+		// gmp_printf("m4=%Zd\n",m4);
+		// gmp_printf("S=%Zd\n",S);
+		// gmp_printf("tmp=%Zd\n",tmp);
+		// gmp_printf("m5=%Zd\n",m5);
+		// gmp_printf("m6=%Zd ",m6);
+		// printf("z1=%d ",z1);
+		// gmp_printf("S,tmp,m6=%Zd,%Zd,%Zd ",S,tmp,m6);
+		// // }
+		mpz_tdiv_q_2exp(sub_vu, sub_vu, 1);// sub_vu=(v-u)>>1
+		mpz_and(v1, sub_vu, m6);//v1 = suv_vu and m6
+		mpz_and(y1, v, m5);//y1 = v and m5
+		mpz_ior(v, v1, y1);
+		mpz_and(y1, xy, m6);//y1 = (x+y) and m6
+		mpz_and(v1, y, m5);//y = y and m5
+		mpz_ior(y, y1, v1);
+		mpz_and(x1, x1, m6);//x1 = x1 and m6
+		mpz_and(u1, x, m5);//u1 = x and m5
+		mpz_ior(x, x1, u1);
+		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+		
+
+		//branch4
+		// mpz_mul_2exp(y1, y, 1); //y1=y<<1
+		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+		mpz_ior(S, S, m6); // S = d or m6
+		mpz_com(m7, S);
+		// gmp_printf("m6=%Zd\n",m6);
+		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+		// gmp_printf("S=%Zd\n",S);
+		// gmp_printf("m7=%Zd ",m7);
+		mpz_sub(sub_uv, u, v);
+		mpz_tdiv_q_2exp(sub_uv, sub_uv, 1);// sub_vu=(u-v)>>1
+		mpz_and(u1, sub_uv, m7);//u1 = (u-v)/2 and m7
+		mpz_and(x1, u, S);//x1 = u and S
+		mpz_ior(u, u1, x1);
+		mpz_and(y1, xy, m7);//y1 = (x+y) and m7
+		mpz_and(v1, y, S);//v1 = y and S
+		mpz_ior(y, y1, v1);//select(y,xy,-S,y,S)
+		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+		mpz_and(x1, x1, m7);//x1 = x1 and m7
+		mpz_and(u1, x, S);//u1 = x and S
+		mpz_ior(x, x1, u1);//select(x,x1,m7,x,S)
+
+		mpz_and(xy, k, d);
+		mpz_add_ui(k, k, 1);
+		mpz_com(d, d);
+		mpz_and(k, k, d);
+		mpz_ior(k, xy, k);//k=((k and d) or ((k+1) and (bitflip(d)))
+
+		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+		
+	}
+	// gmp_printf("k=%Zd\n",k);
+	// gmp_printf("ほぼ逆元=%Zd\n", y);
+	// mpz_add_ui(k, k, 1);
+	// bos(y,p,k); //逆元確認用
+
+	mpz_clear(u); mpz_clear(v); mpz_clear(x); mpz_clear(k); mpz_clear(d); mpz_clear(xy); 
+	mpz_clear(m1); mpz_clear(m2); mpz_clear(m3); mpz_clear(m4); mpz_clear(m5); mpz_clear(m6); 
+	mpz_clear(m7); mpz_clear(S); mpz_clear(eq_vu); mpz_clear(sub_vu); mpz_clear(sub_uv);
+	mpz_clear(zero);
+	return ;
+}
+
 void BY(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 	mpz_t u, v;
 	mpz_init_set(u, a); mpz_init_set(v, p);
@@ -93,7 +293,8 @@ void BY(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 
 	int delta = 1; 
 	int s, z; 
-	int temp1; mpz_t temp2, temp3; mpz_init(temp2); mpz_init(temp3);
+	int temp1;
+	mpz_t temp2, temp3; mpz_init(temp2); mpz_init(temp3);
 
 	for (int i = 0; i < LOOPS; ++i){
 		z = mpz_tstbit(u, 0); //z = LSB(u)
@@ -144,15 +345,16 @@ void BY(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 	}
 	// q->_mp_size *= mpz_sgn(v);
 	mpz_mul_si(q, q, mpz_sgn(v)); 
-	gmp_printf("逆元=%Zd\n", q);
+	// gmp_printf("逆元v=%Zd\n", q);
 	mpz_mul(q, q, pre_comp); mpz_mod(q, q, p); 
+	// gmp_printf("逆元=%Zd\n", q);
+	// printf("aa");
 	mpz_clear(u); mpz_clear(v); mpz_clear(r); mpz_clear(temp2); mpz_clear(temp3);
+	// printf("aaa");
 	return;
 }
 
-/*2^(l+1) - 1*/
-#define P_192_x1 "9850501549098619803069760025035903451269934817616361666987073351061430442874302652853566563721228910201656997576703"
-void SICT_MI(mpz_t v, mpz_t a, mpz_t p, mpz_t pre_com,int LOOPS){
+void JM(mpz_t v, mpz_t a, mpz_t p, mpz_t pre_com,int LOOPS){
 	mpz_t u,q,r;
 	mpz_init_set(u, a); mpz_set(v, p);
 	mpz_init_set_str(q, "0", 10);
@@ -238,6 +440,157 @@ void SICT_MI(mpz_t v, mpz_t a, mpz_t p, mpz_t pre_com,int LOOPS){
 	mpz_clear(u); mpz_clear(temp1); mpz_clear(temp2); 
 	mpz_clear(q); mpz_clear(r); mpz_clear(temp3); mpz_clear(temp4); 
 	return ;
+}
+
+void KM1(mpz_t y, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+	mpz_t u, v, x;
+	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(y, 0); mpz_init_set_ui(x, 1);
+	
+	mpz_t tempu; mpz_init(tempu);
+	mpz_t tempv; mpz_init(tempv);
+	mpz_t tempx; mpz_init(tempx);
+	mpz_t tempy; mpz_init(tempy);
+
+	bool s, z,  b1;
+	int t1;
+	int result;
+	// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+	for (int i = 0; i < LOOPS; ++i){
+		// printf("%d回目\n",i);
+		s = mpz_tstbit(u, 0);
+		// v_lsb = mpz_tstbit(v, 0);
+		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
+		if (result >= 0) {
+			z = 1;
+		} else {
+			z = 0;
+		}
+		// printf("s,z=%d,%d\n",s,z);
+		b1 = (!s) || z;
+		// printf("b1=%d\n",b1);
+		// u,xを求めるフェーズ
+		t1 = 2-(b1<<1)-s;
+		// printf("b1=%d\n",b1<<1);
+		// printf("s,z,sz=%d,%d,%d\n",s,z,s&z);
+		// printf("t1=%d\n",t1);
+		mpz_mul_si(tempv, v, t1);
+		mpz_mul_si(tempy, y, t1);
+		t1 = (b1<<1) - 1;
+		// printf("t1=%d\n",t1);
+		mpz_mul_si(tempu, u, t1);
+		mpz_mul_si(tempx, x, t1);
+		// gmp_printf("tempu=%Zd,",tempu);
+		mpz_add(tempu, tempv, tempu);// add
+		mpz_add(tempx, tempx, tempy);// add temp_x =new x
+	
+		mpz_tdiv_q_2exp(tempu, tempu, 1);// shift temp_u =new u
+
+
+		// v,yを求めるフェーズ
+		mpz_mul_ui(v, v, b1);
+		// gmp_printf("v=%Zd,",v);
+		mpz_mul_ui(y, y, b1);
+
+		b1 = !b1;
+		mpz_mul_ui(u, u, b1);
+		// gmp_printf("u=%Zd,",u);
+		mpz_mul_ui(x, x, b1);
+		mpz_add(v, u, v);//add
+		mpz_add(y, x, y);//add
+		mpz_mul_2exp(y, y, 1);//shift
+
+		mpz_set(u, tempu);
+		mpz_set(x, tempx);
+		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+
+	}
+	mpz_mul(y, y, pre_comp); mpz_mod(y, y, p); 
+	// gmp_printf("逆元=%Zd\n", y);
+	mpz_clear(tempu); mpz_clear(tempv); mpz_clear(tempx); mpz_clear(tempy);
+	mpz_clear(u); mpz_clear(v); mpz_clear(x);
+	return;
+}
+
+void KM2(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+	mpz_t u, v, r, temp1, temp2, temp3, temp4, temp5;
+	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(*q, 0); mpz_init_set_ui(r, 1);
+	mpz_init(temp1); mpz_init(temp2); mpz_init(temp3); mpz_init(temp4); mpz_init(temp5);
+
+	bool s, z;
+	int result;
+	// unsigned long int x;
+	// x=1;
+	
+	mpz_t *A[3][2]; mpz_t *B[3][2];
+
+	A[0][0] = A[2][1] = &u;
+	A[0][1] = A[1][1] = &v;
+	A[1][0] = &temp1;
+	A[2][0] = &temp3;
+
+	B[0][0] = B[2][1] = &r;
+	B[0][1] = B[1][1] = q;
+	B[1][0] = &temp2;
+	B[2][0] = &temp4;
+	
+	
+	uint8_t C[2][2];
+	C[0][0] = C[0][1] = 0;
+	C[1][0] = 2; C[1][1] = 1;
+
+	for (int i = 0; i < LOOPS; ++i){
+		// printf("%d回目\n",i);
+		mpz_sub(temp1, u, v); //sub temp1 = u - v
+		mpz_sub(temp2, r, *q); //sub temp2 = q - r
+		mpz_com(temp3, temp1);
+		mpz_add_ui(temp3, temp3, 1);
+		// mpz_sub(temp3, v, u);
+		mpz_com(temp4, temp2);
+		mpz_add_ui(temp4, temp4, 1);
+		// mpz_sub(temp4, r, *q);
+		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+		// gmp_printf("(temp1,temp2)=(%Zd,%Zd)\n",temp1,temp2);
+		// gmp_printf("(temp3,temp4)=(%Zd,%Zd)\n",temp3,temp4);
+		s = mpz_tstbit(u, 0);
+		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
+		if (result >= 0) {
+			z = 1;
+		} else {
+			z = 0;
+		}
+		
+		C[0][0] = C[s][z]; 
+		// printf("c[0][0]=%d\n",C[0][0]);
+
+		mpz_tdiv_q_2exp(*A[C[0][0]][0], *A[C[0][0]][0], 1); //shift
+
+		mpz_mul_2exp(*B[C[0][0]][1], *B[C[0][0]][1], 1); //shift
+
+		// bs = mpz_cmp(*A[C[0][0]][0], *A[C[0][0]][1]) + 1; //32bit_add
+		// bf = !bs;
+
+	
+		mpz_set(temp5, *A[C[0][0]][1]); // new v
+		mpz_set(u, *A[C[0][0]][0]); // new u
+		mpz_set(v, temp5);
+		
+		// mpz_set(v, temp5);
+		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+		// mpz_set(temp5, *B[C[0][0]][0]); //new q
+		// mpz_set(*q, temp5);
+		// mpz_set(r, *B[C[0][0]][1]); //new r
+		mpz_set(temp5, *B[C[0][0]][1]); //new q
+		mpz_set(r, *B[C[0][0]][0]); // ner r
+		mpz_set(*q, temp5);
+		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+		
+	}
+	mpz_mul(*q, *q, pre_comp); mpz_mod(*q, *q, p); 
+	// gmp_printf("逆元=%Zd\n", *q);
+	mpz_clear(temp1); mpz_clear(temp2); mpz_clear(temp3); 
+	mpz_clear(u); mpz_clear(v); mpz_clear(r);
+	mpz_clear(temp4); mpz_clear(temp5);
+	return;
 }
 
 
@@ -603,87 +956,87 @@ void ex_test2(mpz_t v, mpz_t y, mpz_t m, mpz_t pre_com,int LOOPS, mpz_t x1){
 	return ;
 }
 
-void KM2(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
-	mpz_t u, v, r, temp1, temp2, temp3, temp4, temp5;
-	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(*q, 0); mpz_init_set_ui(r, 1);
-	mpz_init(temp1); mpz_init(temp2); mpz_init(temp3); mpz_init(temp4); mpz_init(temp5);
+// void KM2(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+// 	mpz_t u, v, r, temp1, temp2, temp3, temp4, temp5;
+// 	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(*q, 0); mpz_init_set_ui(r, 1);
+// 	mpz_init(temp1); mpz_init(temp2); mpz_init(temp3); mpz_init(temp4); mpz_init(temp5);
 
-	bool s, z;
-	int result;
-	// unsigned long int x;
-	// x=1;
+// 	bool s, z;
+// 	int result;
+// 	// unsigned long int x;
+// 	// x=1;
 	
-	mpz_t *A[3][2]; mpz_t *B[3][2];
+// 	mpz_t *A[3][2]; mpz_t *B[3][2];
 
-	A[0][0] = A[2][1] = &u;
-	A[0][1] = A[1][1] = &v;
-	A[2][0] = &temp1;
-	A[1][0] = &temp3;
+// 	A[0][0] = A[2][1] = &u;
+// 	A[0][1] = A[1][1] = &v;
+// 	A[2][0] = &temp1;
+// 	A[1][0] = &temp3;
 
-	B[0][0] = B[2][1] = &r;
-	B[0][1] = B[1][1] = q;
-	B[2][0] = &temp2;
-	B[1][0] = &temp4;
+// 	B[0][0] = B[2][1] = &r;
+// 	B[0][1] = B[1][1] = q;
+// 	B[2][0] = &temp2;
+// 	B[1][0] = &temp4;
 	
 	
-	uint8_t C[2][2];
-	C[0][0] = C[0][1] = 0;
-	C[1][0] = 2; C[1][1] = 1;
+// 	uint8_t C[2][2];
+// 	C[0][0] = C[0][1] = 0;
+// 	C[1][0] = 2; C[1][1] = 1;
 
-	for (int i = 0; i < LOOPS; ++i){
-		// printf("%d回目\n",i);
-		mpz_sub(temp1, v, u); //sub temp1 = v - u
-		mpz_sub(temp2, *q, r); //sub temp2 = q - r
-		mpz_com(temp3, temp1);
-		mpz_add_ui(temp3, temp3, 1);
-		// mpz_sub(temp3, u, v);
-		mpz_com(temp4, temp2);
-		mpz_add_ui(temp4, temp4, 1);
-		// mpz_sub(temp4, r, *q);
-		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
-		// gmp_printf("(temp1,temp2)=(%Zd,%Zd)\n",temp1,temp2);
-		// gmp_printf("(temp3,temp4)=(%Zd,%Zd)\n",temp3,temp4);
-		s = mpz_tstbit(u, 0);
-		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
-		if (result >= 0) {
-			z = 1;
-		} else {
-			z = 0;
-		}
+// 	for (int i = 0; i < LOOPS; ++i){
+// 		// printf("%d回目\n",i);
+// 		mpz_sub(temp1, v, u); //sub temp1 = v - u
+// 		mpz_sub(temp2, *q, r); //sub temp2 = q - r
+// 		mpz_com(temp3, temp1);
+// 		mpz_add_ui(temp3, temp3, 1);
+// 		// mpz_sub(temp3, u, v);
+// 		mpz_com(temp4, temp2);
+// 		mpz_add_ui(temp4, temp4, 1);
+// 		// mpz_sub(temp4, r, *q);
+// 		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+// 		// gmp_printf("(temp1,temp2)=(%Zd,%Zd)\n",temp1,temp2);
+// 		// gmp_printf("(temp3,temp4)=(%Zd,%Zd)\n",temp3,temp4);
+// 		s = mpz_tstbit(u, 0);
+// 		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
+// 		if (result >= 0) {
+// 			z = 1;
+// 		} else {
+// 			z = 0;
+// 		}
 		
-		C[0][0] = C[s][z]; 
-		// printf("c[0][0]=%d\n",C[0][0]);
+// 		C[0][0] = C[s][z]; 
+// 		// printf("c[0][0]=%d\n",C[0][0]);
 
-		mpz_tdiv_q_2exp(*A[C[0][0]][0], *A[C[0][0]][0], 1); //shift
+// 		mpz_tdiv_q_2exp(*A[C[0][0]][0], *A[C[0][0]][0], 1); //shift
 
-		mpz_mul_2exp(*B[C[0][0]][1], *B[C[0][0]][1], 1); //shift
+// 		mpz_mul_2exp(*B[C[0][0]][1], *B[C[0][0]][1], 1); //shift
 
-		// bs = mpz_cmp(*A[C[0][0]][0], *A[C[0][0]][1]) + 1; //32bit_add
-		// bf = !bs;
+// 		// bs = mpz_cmp(*A[C[0][0]][0], *A[C[0][0]][1]) + 1; //32bit_add
+// 		// bf = !bs;
 
 	
-		mpz_set(temp5, *A[C[0][0]][1]); // new v
-		mpz_set(u, *A[C[0][0]][0]); // new u
-		mpz_set(v, temp5);
+// 		mpz_set(temp5, *A[C[0][0]][1]); // new v
+// 		mpz_set(u, *A[C[0][0]][0]); // new u
+// 		mpz_set(v, temp5);
 		
-		// mpz_set(v, temp5);
-		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
-		// mpz_set(temp5, *B[C[0][0]][0]); //new q
-		// mpz_set(*q, temp5);
-		// mpz_set(r, *B[C[0][0]][1]); //new r
-		mpz_set(temp5, *B[C[0][0]][1]); //new q
-		mpz_set(r, *B[C[0][0]][0]); // ner r
-		mpz_set(*q, temp5);
-		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+// 		// mpz_set(v, temp5);
+// 		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
+// 		// mpz_set(temp5, *B[C[0][0]][0]); //new q
+// 		// mpz_set(*q, temp5);
+// 		// mpz_set(r, *B[C[0][0]][1]); //new r
+// 		mpz_set(temp5, *B[C[0][0]][1]); //new q
+// 		mpz_set(r, *B[C[0][0]][0]); // ner r
+// 		mpz_set(*q, temp5);
+// 		// gmp_printf("(u,v,q,r)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,*q,r);
 		
-	}
-	mpz_mul(*q, *q, pre_comp); mpz_mod(*q, *q, p); 
+// 	}
+// 	mpz_mul(*q, *q, pre_comp); mpz_mod(*q, *q, p); 
 	// gmp_printf("逆元=%Zd\n", *q);
-	mpz_clear(temp1); mpz_clear(temp2); mpz_clear(temp3); 
-	mpz_clear(u); mpz_clear(v); mpz_clear(r);
-	mpz_clear(temp4); mpz_clear(temp5);
-	return;
-}
+// 	mpz_clear(temp1); mpz_clear(temp2); mpz_clear(temp3); 
+// 	mpz_clear(u); mpz_clear(v); mpz_clear(r);
+// 	mpz_clear(temp4); mpz_clear(temp5);
+// 	return;
+// }
 
 
 void ECTMI2(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
@@ -759,74 +1112,74 @@ void ECTMI2(mpz_t q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 }
 
 
-void KM1(mpz_t y, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
-	mpz_t u, v, x;
-	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(y, 0); mpz_init_set_ui(x, 1);
+// void KM1(mpz_t y, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
+// 	mpz_t u, v, x;
+// 	mpz_init_set(u, a); mpz_init_set(v, p); mpz_set_ui(y, 0); mpz_init_set_ui(x, 1);
 	
-	mpz_t tempu; mpz_init(tempu);
-	mpz_t tempv; mpz_init(tempv);
-	mpz_t tempx; mpz_init(tempx);
-	mpz_t tempy; mpz_init(tempy);
+// 	mpz_t tempu; mpz_init(tempu);
+// 	mpz_t tempv; mpz_init(tempv);
+// 	mpz_t tempx; mpz_init(tempx);
+// 	mpz_t tempy; mpz_init(tempy);
 
-	bool s, z,  b1;
-	int t1;
-	int result;
-	// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
-	for (int i = 0; i < LOOPS; ++i){
-		// printf("%d回目\n",i);
-		s = mpz_tstbit(u, 0);
-		// v_lsb = mpz_tstbit(v, 0);
-		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
-		if (result >= 0) {
-			z = 1;
-		} else {
-			z = 0;
-		}
-		// printf("s,z=%d,%d\n",s,z);
-		b1 = (!s) || z;
-		// printf("b1=%d\n",b1);
-		// u,xを求めるフェーズ
-		t1 = 2-(b1<<1)-s;
-		// printf("b1=%d\n",b1<<1);
-		// printf("s,z,sz=%d,%d,%d\n",s,z,s&z);
-		// printf("t1=%d\n",t1);
-		mpz_mul_si(tempv, v, t1);
-		mpz_mul_si(tempy, y, t1);
-		t1 = (b1<<1) - 1;
-		// printf("t1=%d\n",t1);
-		mpz_mul_si(tempu, u, t1);
-		mpz_mul_si(tempx, x, t1);
-		// gmp_printf("tempu=%Zd,",tempu);
-		mpz_add(tempu, tempv, tempu);// add
-		mpz_add(tempx, tempx, tempy);// add temp_x =new x
+// 	bool s, z,  b1;
+// 	int t1;
+// 	int result;
+// 	// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+// 	for (int i = 0; i < LOOPS; ++i){
+// 		// printf("%d回目\n",i);
+// 		s = mpz_tstbit(u, 0);
+// 		// v_lsb = mpz_tstbit(v, 0);
+// 		result = mpz_cmp(u,v);// u>=vのときz=1 u<vのときz=0
+// 		if (result >= 0) {
+// 			z = 1;
+// 		} else {
+// 			z = 0;
+// 		}
+// 		// printf("s,z=%d,%d\n",s,z);
+// 		b1 = (!s) || z;
+// 		// printf("b1=%d\n",b1);
+// 		// u,xを求めるフェーズ
+// 		t1 = 2-(b1<<1)-s;
+// 		// printf("b1=%d\n",b1<<1);
+// 		// printf("s,z,sz=%d,%d,%d\n",s,z,s&z);
+// 		// printf("t1=%d\n",t1);
+// 		mpz_mul_si(tempv, v, t1);
+// 		mpz_mul_si(tempy, y, t1);
+// 		t1 = (b1<<1) - 1;
+// 		// printf("t1=%d\n",t1);
+// 		mpz_mul_si(tempu, u, t1);
+// 		mpz_mul_si(tempx, x, t1);
+// 		// gmp_printf("tempu=%Zd,",tempu);
+// 		mpz_add(tempu, tempv, tempu);// add
+// 		mpz_add(tempx, tempx, tempy);// add temp_x =new x
 	
-		mpz_tdiv_q_2exp(tempu, tempu, 1);// shift temp_u =new u
+// 		mpz_tdiv_q_2exp(tempu, tempu, 1);// shift temp_u =new u
 
 
-		// v,yを求めるフェーズ
-		mpz_mul_ui(v, v, b1);
-		// gmp_printf("v=%Zd,",v);
-		mpz_mul_ui(y, y, b1);
+// 		// v,yを求めるフェーズ
+// 		mpz_mul_ui(v, v, b1);
+// 		// gmp_printf("v=%Zd,",v);
+// 		mpz_mul_ui(y, y, b1);
 
-		b1 = !b1;
-		mpz_mul_ui(u, u, b1);
-		// gmp_printf("u=%Zd,",u);
-		mpz_mul_ui(x, x, b1);
-		mpz_add(v, u, v);//add
-		mpz_add(y, x, y);//add
-		mpz_mul_2exp(y, y, 1);//shift
+// 		b1 = !b1;
+// 		mpz_mul_ui(u, u, b1);
+// 		// gmp_printf("u=%Zd,",u);
+// 		mpz_mul_ui(x, x, b1);
+// 		mpz_add(v, u, v);//add
+// 		mpz_add(y, x, y);//add
+// 		mpz_mul_2exp(y, y, 1);//shift
 
-		mpz_set(u, tempu);
-		mpz_set(x, tempx);
-		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+// 		mpz_set(u, tempu);
+// 		mpz_set(x, tempx);
+// 		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
 
-	}
-	mpz_mul(y, y, pre_comp); mpz_mod(y, y, p); 
-	// gmp_printf("逆元=%Zd\n", y);
-	mpz_clear(tempu); mpz_clear(tempv); mpz_clear(tempx); mpz_clear(tempy);
-	mpz_clear(u); mpz_clear(v); mpz_clear(x);
-	return;
-}
+// 	}
+// 	mpz_mul(y, y, pre_comp); mpz_mod(y, y, p); 
+// 	// gmp_printf("逆元=%Zd\n", y);
+// 	mpz_clear(tempu); mpz_clear(tempv); mpz_clear(tempx); mpz_clear(tempy);
+// 	mpz_clear(u); mpz_clear(v); mpz_clear(x);
+// 	return;
+// }
 
 
 void ECTMI3(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
@@ -888,53 +1241,195 @@ void ECTMI3(mpz_t *q, mpz_t a, mpz_t p, mpz_t pre_comp, int LOOPS){
 }
 
 
-// void BOS(mpz_t *q, mpz_t a, mpz_t p, int LOOPS){
-// 	mpz_t z,u,v,r,k,d;
+
+// void bos(mpz_t y,mpz_t p, mpz_t k){
+// 	unsigned long l = mpz_get_ui(k);
+// 	mpz_t result,a;
+//     mpz_init(result);
+// 	mpz_init(a);
+//     mpz_set_str(a, "2", 10);
+//     mpz_pow_ui(result, a, l);
+//     // gmp_printf("2^l = %Zd\n",result); 
+//     mpz_invert(result, result, p);
+//     // gmp_printf("2^(-l) = %Zd\n",result);
+//     mpz_mul(result, result, y);
+//     mpz_mod(result, result, p);
+//     // gmp_printf("P * 2^(-l) = %Zd\n", result);
+// 	// printf("BOS\n");
+// 	gmp_printf("逆元=%Zd\n", result);
+//     mpz_clear(result); mpz_clear(a);
+// 	return;
+
+// }
+
+// void BOS(mpz_t y, mpz_t a, mpz_t p, int LOOPS, mpz_t X1){
+// 	mpz_t u,v,x,k,d;
+// 	mpz_t tmp;
+// 	mpz_init(tmp);
 // 	mpz_t zero,one;
 // 	mpz_t m1,m2,m3,m4,m5,m6,m7,S;
-// 	mpz_init(m1); mpz_init(m2); mpz_init(m3); mpz_init(m4); mpz_init(m5); mpz_init(m6); mpz_init(m7);
-// 	mpz_init(S);
+// 	mpz_t v1,u1,x1,y1,xy;
+// 	mpz_init(m1); mpz_init(m2); mpz_init(m3); mpz_init(m4); mpz_init(m5); mpz_init(m6); mpz_init(m7);mpz_init(S);
+// 	// mpz_init(z1);
+// 	// mpz_init(z2);
+// 	mpz_init(v1);
+// 	mpz_init(u1);
+// 	mpz_init(x1);
+// 	mpz_init(y1);
+// 	mpz_init(xy);
 // 	mpz_init_set(u, a);
 // 	mpz_init_set(v, p);
-// 	mpz_init_set_str(r, "1", 10);
-// 	mpz_init_set_str(q, "0", 10);
+// 	mpz_init_set_str(x, "1", 10);
+// 	mpz_init_set_str(y, "0", 10);
 // 	mpz_init_set_str(k, "0",10);
+// 	mpz_init(d);
 // 	mpz_init_set_str(zero, "0",10);
-// 	mpz_init_set_str(one, "1",10);
+// 	// mpz_init_set_str(one, "1",10);
 
-// 	mpz_t sub_vu; mpz_init(sub_vu);
+// 	mpz_t eq_vu,sub_vu, sub_uv;
+// 	mpz_init(eq_vu); mpz_init(sub_vu);mpz_init(sub_uv);
 // 	int vu;
-
-
+	
 // 	bool u_lsb,v_lsb;
 	
-// 	//gmp_printf("(a,u,b,v)=(%Zd,%Zd,%Zd,%Zd)\n",a,u,b,v);
+// 	// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
 // 	for (int i = 0; i < LOOPS; ++i){
+// 		// printf("ーーーーーループ回数：%dーーーーーー\n",i);
+// 		// gmp_printf("k=%Zd\n",k);
+// 		// gmp_printf("(u,v)=(%Zd,%Zd)\n",u,v);
 // 		u_lsb = mpz_tstbit(u, 0); //uの最下位ビット
 // 		v_lsb = mpz_tstbit(v, 0); //vの最下位ビット
 // 		mpz_sub(sub_vu, v, u); //sub v-u
 // 		vu = mpz_cmp(v,u);// v>=uのときz=1 a<bのときz=0
-// 		if (vu > 0) {
-// 			mpz_set(z,1);
-// 		} else {
-// 			mpz_set(z,0);
+// 		int z1 = 0;
+// 		int z2 = 0;
+// 		if (vu > 0) {//v>u
+// 			// mpz_set(z1,0);
+// 			// mpz_set(z2,0);
+// 			mpz_set(d,zero);
+// 			z2=1;
+// 		} else if (vu == 0) {//v=u
+// 			// mpz_set(z1,0);
+// 			// mpz_set(z2,1);
+// 			mpz_set(d,X1);
+// 			// printf("k=%d\n",i);
+// 			z1=1;
+// 		} else{//v<u
+// 			// mpz_set(z1,1);
+// 			z1 = 1;
+// 			// mpz_set(z2,0);
+// 			mpz_set(d,zero);
 // 		}
-// 		mpz_sub_uni(d, 0, sub_vu);
-// 		mpz_tdiv_q_2exp(v, v, 1); //v=v>>1
-// 		mpz_mul_2exp(r, r, 1); //r=r<<1
-// 		mpz_and(u_lsb, u_lsb, one); // u_lsb and 1
-// 		mpz_sub(u_lsb, 0, u_lsb); // u_lsb = 0 - u_lsb
-// 		mpz_ior(m1);
+// 		// gmp_printf("d=%Zd\n",d);
+// 		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+// 		//branch1
+// 		mpz_add(xy, x ,y);//xy=x+y
+// 		mpz_mul_2exp(x1, x, 1); //x1=x<<1
+// 		mpz_tdiv_q_2exp(v1, v, 1); //v=v>>1
+// 		mpz_set_si(tmp,(0 - (v_lsb & 1)));
+// 		mpz_ior(m1, d, tmp);
+// 		mpz_com(m2, m1);
+// 		mpz_and(v1, v1, m2);//v1 = v1 and m2
+// 		mpz_and(u1, v, m1);//u1 = v and m1
+// 		mpz_ior(v, v1, u1);
+// 		// gmp_printf("m1=%Zd\n",m1);
+// 		// gmp_printf("m2=%Zd ",m2);
+// 		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+// 		mpz_and(u1, x1, m2);//u1 = x1 and m2
+// 		mpz_and(v1, u1, m1);//v1 = x and m1
+// 		mpz_ior(x, x1, v1);
 
+// 		//branch2
+// 		mpz_mul_2exp(y1, y, 1); //y1=y<<1
+// 		mpz_tdiv_q_2exp(u1, u, 1); //u1=u>>1
+// 		mpz_ior(S, d, m2); // S = d or m2 
+// 		mpz_set_si(tmp,(0 - (u_lsb & 1)));//mpz_t に変換
+// 		// gmp_printf("d=%Zd\n",d);
+// 		// gmp_printf("m2=%Zd\n",m2);
+// 		// gmp_printf("S=%Zd\n",S);
+// 		// gmp_printf("tmp=%Zd\n",tmp);
+// 		mpz_ior(m3, S, tmp);
+// 		mpz_com(m4, m3);
+// 		mpz_and(u1, u1, m4);//u1 = u1 and m4
+// 		mpz_and(v1, u, m3);//v1 = u and m3
+// 		mpz_ior(u, u1, v1);
+// 		// gmp_printf("m3=%Zd\n",m3);
+// 		// gmp_printf("m4=%Zd ",m4);
+// 		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+// 		mpz_and(v1, y1, m4);//v1 = y1 and m4
+// 		mpz_and(u1, y, m3);//u1 = y and m3
+// 		mpz_ior(y, v1, u1);
 
+// 		//branch3
+// 		// mpz_mul_2exp(y1, y, 1); //y1=y<<1
+// 		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+// 		mpz_ior(S, S, m4); // S = S or m4 
+// 		mpz_set_si(tmp,(0 - z1));//mpz_t に変換
+// 		mpz_ior(m5, S, tmp);
+// 		mpz_com(m6, m5);
+// 		// if(i>186){
+
+// 		// gmp_printf("m4=%Zd\n",m4);
+// 		// gmp_printf("S=%Zd\n",S);
+// 		// gmp_printf("tmp=%Zd\n",tmp);
+// 		// gmp_printf("m5=%Zd\n",m5);
+// 		// gmp_printf("m6=%Zd ",m6);
+// 		// printf("z1=%d ",z1);
+// 		// gmp_printf("S,tmp,m6=%Zd,%Zd,%Zd ",S,tmp,m6);
+// 		// // }
+// 		mpz_tdiv_q_2exp(sub_vu, sub_vu, 1);// sub_vu=(v-u)>>1
+// 		mpz_and(v1, sub_vu, m6);//v1 = suv_vu and m6
+// 		mpz_and(y1, v, m5);//y1 = v and m5
+// 		mpz_ior(v, v1, y1);
+// 		mpz_and(y1, xy, m6);//y1 = (x+y) and m6
+// 		mpz_and(v1, y, m5);//y = y and m5
+// 		mpz_ior(y, y1, v1);
+// 		mpz_and(x1, x1, m6);//x1 = x1 and m6
+// 		mpz_and(u1, x, m5);//u1 = x and m5
+// 		mpz_ior(x, x1, u1);
+// 		// gmp_printf("(v,u,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",v,u,x,y);
+		
+
+// 		//branch4
+// 		// mpz_mul_2exp(y1, y, 1); //y1=y<<1
+// 		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+// 		mpz_ior(S, S, m6); // S = d or m6
+// 		mpz_com(m7, S);
+// 		// gmp_printf("m6=%Zd\n",m6);
+// 		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+// 		// gmp_printf("S=%Zd\n",S);
+// 		// gmp_printf("m7=%Zd ",m7);
+// 		mpz_sub(sub_uv, u, v);
+// 		mpz_tdiv_q_2exp(sub_uv, sub_uv, 1);// sub_vu=(u-v)>>1
+// 		mpz_and(u1, sub_uv, m7);//u1 = (u-v)/2 and m7
+// 		mpz_and(x1, u, S);//x1 = u and S
+// 		mpz_ior(u, u1, x1);
+// 		mpz_and(y1, xy, m7);//y1 = (x+y) and m7
+// 		mpz_and(v1, y, S);//v1 = y and S
+// 		mpz_ior(y, y1, v1);//select(y,xy,-S,y,S)
+// 		// mpz_mul_2exp(x1, x, 1); //x1=x<<1
+// 		mpz_and(x1, x1, m7);//x1 = x1 and m7
+// 		mpz_and(u1, x, S);//u1 = x and S
+// 		mpz_ior(x, x1, u1);//select(x,x1,m7,x,S)
+
+// 		mpz_and(xy, k, d);
+// 		mpz_add_ui(k, k, 1);
+// 		mpz_com(d, d);
+// 		mpz_and(k, k, d);
+// 		mpz_ior(k, xy, k);//k=((k and d) or ((k+1) and (bitflip(d)))
+
+// 		// gmp_printf("(u,v,x,y)=(%Zd,%Zd,%Zd,%Zd)\n",u,v,x,y);
+		
 // 	}
-// 	// // gmp_printf("(u,v)=(%Zd,%Zd)\n",u,v);
-// 	// mpz_mul(v, v, pre_com);	mpz_mod(v, v, m);
-// 	// // gmp_printf("逆元=%Zd\n", v);
+// 	gmp_printf("k=%Zd\n",k);
+// 	gmp_printf("ほぼ逆元=%Zd\n", y);
+// 	// mpz_add_ui(k, k, 1);
+// 	bos(y,p,k); //逆元確認用
 
-// 	// mpz_clear(a); mpz_clear(b); mpz_clear(u); 
-// 	// mpz_clear(tempa); mpz_clear(tempa1); mpz_clear(tempb); 
-// 	// mpz_clear(tempu); mpz_clear(tempu1); mpz_clear(tempv); 
+// 	mpz_clear(u); mpz_clear(v); mpz_clear(x); mpz_clear(k); mpz_clear(d); mpz_clear(xy); 
+// 	mpz_clear(m1); mpz_clear(m2); mpz_clear(m3); mpz_clear(m4); mpz_clear(m5); mpz_clear(m6); 
+// 	mpz_clear(m7); mpz_clear(S); mpz_clear(eq_vu); mpz_clear(sub_vu); mpz_clear(sub_uv);
+// 	mpz_clear(zero);
 // 	return ;
 // }
 

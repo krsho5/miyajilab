@@ -48,9 +48,7 @@ int main(){
 		mpz_init_set_str(p, P_384, 10);
 		mpz_init_set_str(pre_com, P_384_pre_com, 10);
 		mpz_init_set_str(new_pre_com, P_384_new_pre_com, 10);
-		mpz_init_set_str(pre_hdfctmi, P_384_PRE_hdFCIMI, 10);
 		loop = P_384_LOOPS_SICTMI;
-		hloop = P_384_LOOPS_hdFCTMI;
 		fltloop = P_384_LOOPS_FLT;
 	}else if(check==512){
 		mpz_init_set_str(p, P_512, 10);
@@ -217,10 +215,10 @@ int main(){
 		// printf("割合:%f\n",per);
 		
 
-		printf("Mp,Sp,Ap,Subp,shiftp,xorp,andp,bitflipp,cmp,select,Mpw,andpw,orpw\n");
+		// printf("Sp,Ap,Subp,shiftp,xorp,andp,bitflipp,cmp,Mpw,andpw,orpw,select\n");
 		printf("%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld\n", Mp, Sp, Ap, Subp, lshift, xor_p, and_p, bitflip,cmp, select, Mpw, andpw, orpw);
-		printf("Sp/Mp,Ap/Mp,Subp/Mp,shift/Mp,xorp/Mp,and_p/Mp,bitflip/Mp,cmp/Mp,select/Mp,Mpw/Mp,andpw/Mp,orpw/Mp\n");
-		printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",   (double)Sp/Mp, (double)Ap/Mp, (double)Subp/Mp, (double)lshift/Mp, (double)xor_p/Mp, (double)and_p/Mp, (double)bitflip/Mp, (double)cmp/Mp, (double)select/Mp, (double)Mpw/Mp, (double)andpw/Mp, (double)orpw/Mp);
+		// printf("Sp/Mp,Ap/Mp,Subp/Mp,shift/Mp,xorp/Mp,and_p/Mp,bitflip/Mp,cmp/Mp,Mpw/Mp,andpw/Mp,orpw/Mp,select/Mp\n");
+		printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",   (double)Sp/Mp, (double)Ap/Mp, (double)Subp/Mp, (double)lshift/Mp, (double)xor_p/Mp, (double)and_p/Mp, (double)bitflip/Mp, (double)cmp/Mp, (double)Mpw/Mp, (double)andpw/Mp, (double)orpw/Mp, (double)select/Mp);
 		// printf("Mpw/Mp, and_p/Mp, or_p/Mp, andpw/Mp, orpw/Mp\n");
 		// printf("%f,%f,%f,%f,%f\n",(double)Mpw/Mp,(double)and_p/Mp, (double)or_p/Mp, (double)andpw/Mp, (double)orpw/Mp);
 		// printf("andw\n%ld\n", (CC2-CC1)/N);
