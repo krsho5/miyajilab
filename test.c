@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include "test.h"
 // #include "Modular_Inversion.h"
-#define num 0 // 0のとき平均クロックサイクル数を測定
+#define num 1 // 0のとき平均クロックサイクル数を測定
 
 int main(){
     mpz_t result,x,y,p,pre_com,new_pre_com,pre_hdfctmi,pre_BY;
@@ -15,7 +15,7 @@ int main(){
 	// mpz_and(x1,x1,x);
 	// gmp_printf("x1=%Zd\n",x1);
 	int check;
-	check=192; // 192,224,256,384,512のいずれかを指定
+	check=512; // 192,224,256,384,512のいずれかを指定
 	if(check==192){
 		mpz_init_set_str(p, P_192, 10);
 		mpz_init_set_str(pre_com, P_192_pre_com, 10);
@@ -103,7 +103,7 @@ int main(){
 
 		CC1 = GetCC();
 		for(int i = 0; i < N; ++i){
-			JM(result,test_num[i], p, pre_com, loop);
+			JM2(&result,test_num[i], p, pre_com, loop);
 		}
 		CC2 = GetCC();
 			printf("JM\n%ld\n", (CC2-CC1)/N);
@@ -132,7 +132,8 @@ int main(){
 		FLT(result, x, p, fltloop);
 		BY(result, x, p, pre_BY,byloop);
 		BOS(result, x, p, loop, x1);
-		JM(result, x, p, pre_com, loop);
+		// JM(result, x, p, pre_com, loop);
+		// JM2(&result, x, p, pre_com, loop);
 		KM1(result, x, p, new_pre_com, loop-2);
 		KM2(&result, x, p, new_pre_com, loop-2);
 		// ex_SICT_MI(result, x, p, new_pre_com, loop-2);
